@@ -7,13 +7,5 @@ export default defineConfig({
   base: '/Shuffle/',
   server: {
     host: '0.0.0.0'
-  },
-  build: {
-    // Use legacy format for better compatibility with GitHub Pages
-    rollupOptions: {
-      output: {
-        format: 'iife'
-      }
-    }
   }
 })
