@@ -6,7 +6,7 @@
   "description": "React TypeScript using Vite bundler",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && type nul > dist/.nojekyll",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
