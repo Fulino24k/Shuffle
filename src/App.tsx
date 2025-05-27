@@ -826,17 +826,26 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     return grid;
   };
 
-  // Handlers for navigation
+  // Handlers for navigation with animation direction tracking
+  const [animationDirection, setAnimationDirection] = useState<"left" | "right">("right");
+  
   const prevMonth = () => {
+    setAnimationDirection("left");
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
+  
   const nextMonth = () => {
+    setAnimationDirection("right");
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
+  
   const prevYear = () => {
+    setAnimationDirection("left");
     setCurrentDate(new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1));
   };
+  
   const nextYear = () => {
+    setAnimationDirection("right");
     setCurrentDate(new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), 1));
   };
 
@@ -862,6 +871,29 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   const monthGrid = generateMonthGrid(currentDate);
   const yearGrid = generateYearGrid(currentDate.getFullYear());
 
+  // Animation variants for month/year transitions
+  const slideVariants = {
+    enter: (direction: "left" | "right") => ({
+      x: direction === "right" ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: "left" | "right") => ({
+      x: direction === "right" ? -300 : 300,
+      opacity: 0
+    })
+  };
+
+  // Fade variants for view mode changes (month <-> year)
+  const fadeVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -873,160 +905,223 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-lg p-6 relative w-[90vw] max-w-4xl max-h-[80vh] overflow-y-auto shadow-xl"
+        style={{ 
+          width: "800px", 
+          height: viewMode === "year" ? "1000px" : "600px", // Taller height for year view
+          maxHeight: "90vh", // Ensure it doesn't exceed 90% of viewport height
+          marginTop: viewMode === "year" ? "0px" : "0" // Move yearly view up by 100px
+        }}
+        className="bg-white rounded-lg p-6 relative overflow-auto shadow-xl"
       >
         <FaTimes
-          className="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-gray-700"
+          className="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-gray-700 z-10"
           onClick={handleClose}
         />
-        {viewMode === "month" ? (
-          <motion.div
-            key="month-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Month view content */}
-            <div className="flex justify-center items-center mb-4">
-              <div className="relative inline-flex items-center justify-center w-64">
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute left-0 cursor-pointer"
-                >
-                  <FaChevronLeft 
-                    className="text-gray-500 hover:text-blue-500" 
-                    onClick={prevMonth}
-                    size={16}
-                  />
-                </motion.div>
-                <span
-                  className="text-xl font-semibold text-center cursor-pointer hover:text-blue-500"
-                  onClick={() => setViewMode("year")}
-                  title="Click to view year overview"
-                >
-                  {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
-                </span>
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-0 cursor-pointer"
-                >
-                  <FaChevronRight 
-                    className="text-gray-500 hover:text-blue-500" 
-                    onClick={nextMonth}
-                    size={16}
-                  />
-                </motion.div>
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-2 text-center">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="font-medium text-gray-600">{day}</div>
-              ))}
-              {monthGrid.flat().map((cell, index) => (
-                <div
-                  key={index}
-                  className={`p-2 ${
-                    cell ? "cursor-pointer" : ""
-                  } ${
-                    cell?.hasEntries ? "bg-blue-50 font-bold" : "text-gray-500"
-                  } ${
-                    cell?.isToday ? "border-2 border-blue-500 rounded-full font-bold text-blue-700" : cell ? "hover:bg-blue-100 hover:rounded-full" : ""
-                  }`}
-                  onClick={() => {
-                    if (cell) {
-                      onDateSelect(cell.dateStr);
-                      onClose();
-                    }
-                  }}
-                >
-                  {cell?.day || ""}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="year-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Year view content */}
-            <div className="flex justify-center items-center mb-4">
-              <div className="relative inline-flex items-center justify-center w-48">
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute left-0 cursor-pointer"
-                >
-                  <FaChevronLeft 
-                    className="text-gray-500 hover:text-blue-500" 
-                    onClick={prevYear}
-                    size={16}
-                  />
-                </motion.div>
-                <span className="text-xl font-semibold text-center">
-                  {currentDate.getFullYear()}
-                </span>
-                <motion.div 
-                  whileHover={{ scale: 1.1 }} 
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-0 cursor-pointer"
-                >
-                  <FaChevronRight 
-                    className="text-gray-500 hover:text-blue-500" 
-                    onClick={nextYear}
-                    size={16}
-                  />
-                </motion.div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {yearGrid.map((month, idx) => (
-                <div key={idx} className="border p-2 rounded">
-                  <div
-                    className="text-center font-medium mb-2 cursor-pointer hover:text-blue-500"
-                    onClick={() => {
-                      setCurrentDate(new Date(currentDate.getFullYear(), idx, 1));
-                      setViewMode("month");
-                    }}
-                  >
-                    {month.name}
+        
+        <div className="h-full flex flex-col">
+          <AnimatePresence mode="wait">
+            {viewMode === "month" ? (
+              <motion.div 
+                key="month-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 flex flex-col overflow-auto"
+              >
+                {/* Month view header */}
+                <div className="flex justify-center items-center h-12 mb-4">
+                  <div className="relative inline-flex items-center justify-center w-64">
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }} 
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute left-0 cursor-pointer"
+                    >
+                      <FaChevronLeft 
+                        className="text-gray-500 hover:text-blue-500" 
+                        onClick={prevMonth}
+                        size={16}
+                      />
+                    </motion.div>
+                    <span
+                      className="text-xl font-semibold text-center cursor-pointer hover:text-blue-500"
+                      onClick={() => setViewMode("year")}
+                      title="Click to view year overview"
+                    >
+                      {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
+                    </span>
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }} 
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute right-0 cursor-pointer"
+                    >
+                      <FaChevronRight 
+                        className="text-gray-500 hover:text-blue-500" 
+                        onClick={nextMonth}
+                        size={16}
+                      />
+                    </motion.div>
                   </div>
-                  <div className="grid grid-cols-7 gap-1 text-xs text-center">
-                    {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
-                      <div key={day} className="text-gray-600">{day}</div>
-                    ))}
-                    {month.grid.flat().map((cell, cellIdx) => (
-                      <div
-                        key={cellIdx}
-                        className={`p-1 ${
-                          cell ? "cursor-pointer" : ""
-                        } ${
-                          cell?.hasEntries ? "bg-blue-50 font-bold" : "text-gray-500"
-                        } ${
-                          cell?.isToday ? "border border-blue-500 rounded-full text-blue-700" : cell ? "hover:bg-blue-100 hover:rounded-full" : ""
-                        }`}
-                        onClick={() => {
-                          if (cell) {
-                            onDateSelect(cell.dateStr);
-                            onClose();
-                          }
-                        }}
-                      >
-                        {cell?.day || ""}
+                </div>
+                
+                {/* Month view content with animation - fixed height */}
+                <div className="flex-1 overflow-hidden">
+                  <AnimatePresence initial={false} custom={animationDirection} mode="wait">
+                    <motion.div
+                      key={`month-${currentDate.getMonth()}-${currentDate.getFullYear()}`}
+                      custom={animationDirection}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.3 }}
+                      className="h-full flex flex-col"
+                    >
+                      <div className="grid grid-cols-7 gap-2 text-center">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                          <div key={day} className="font-medium text-gray-600 py-2">{day}</div>
+                        ))}
                       </div>
-                    ))}
+                      
+                      {/* Fixed 6-row grid regardless of month */}
+                      <div className="grid grid-cols-7 grid-rows-6 gap-2 text-center flex-1">
+                        {Array.from({ length: 42 }).map((_, index) => {
+                          const flatIndex = index;
+                          const cell = monthGrid.flat()[flatIndex];
+                          
+                          return (
+                            <div
+                              key={index}
+                              className={`flex items-center justify-center ${
+                                cell ? "cursor-pointer" : ""
+                              } ${
+                                cell?.hasEntries ? "bg-blue-50 font-bold" : "text-gray-500"
+                              } ${
+                                cell?.isToday ? "border-2 border-blue-500 rounded-full font-bold text-blue-700" : cell ? "hover:bg-blue-100 hover:rounded-full" : ""
+                              }`}
+                              onClick={() => {
+                                if (cell) {
+                                  onDateSelect(cell.dateStr);
+                                  onClose();
+                                }
+                              }}
+                            >
+                              {cell?.day || ""}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="year-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 flex flex-col h-full overflow-auto"
+              >
+                {/* Year view header - fixed at top */}
+                <div className="flex justify-center items-center h-12 mb-4 flex-shrink-0">
+                  <div className="relative inline-flex items-center justify-center w-48">
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }} 
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute left-0 cursor-pointer"
+                    >
+                      <FaChevronLeft 
+                        className="text-gray-500 hover:text-blue-500" 
+                        onClick={prevYear}
+                        size={16}
+                      />
+                    </motion.div>
+                    <span className="text-xl font-semibold text-center">
+                      {currentDate.getFullYear()}
+                    </span>
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }} 
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute right-0 cursor-pointer"
+                    >
+                      <FaChevronRight 
+                        className="text-gray-500 hover:text-blue-500" 
+                        onClick={nextYear}
+                        size={16}
+                      />
+                    </motion.div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+                
+                {/* Year view content - displays all months without scrolling */}
+                <div className="flex-1">
+                  <AnimatePresence initial={false} custom={animationDirection} mode="wait">
+                    <motion.div
+                      key={`year-${currentDate.getFullYear()}`}
+                      custom={animationDirection}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.3 }}
+                      className="h-full"
+                    >
+                      <div className="grid grid-cols-3 gap-3 h-full">
+                        {yearGrid.map((month, idx) => (
+                          <div key={idx} className="border rounded flex flex-col">
+                            <div
+                              className="text-center font-medium py-1 cursor-pointer hover:text-blue-500 bg-gray-50 rounded-t"
+                              onClick={() => {
+                                setCurrentDate(new Date(currentDate.getFullYear(), idx, 1));
+                                setViewMode("month");
+                              }}
+                            >
+                              {month.name}
+                            </div>
+                            <div className="grid grid-cols-7 gap-px text-xs text-center p-1">
+                              {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+                                <div key={day} className="text-gray-600 font-bold">{day}</div>
+                              ))}
+                              {/* Always render 6 rows of days for consistent sizing */}
+                              {Array.from({ length: 42 }).map((_, cellIdx) => {
+                                const rowIdx = Math.floor(cellIdx / 7);
+                                const colIdx = cellIdx % 7;
+                                const cell = month.grid[rowIdx] ? month.grid[rowIdx][colIdx] : null;
+                                
+                                return (
+                                  <div
+                                    key={cellIdx}
+                                    className={`p-1 ${
+                                      cell ? "cursor-pointer" : ""
+                                    } ${
+                                      cell?.hasEntries ? "bg-blue-50 font-bold" : "text-gray-500"
+                                    } ${
+                                      cell?.isToday ? "border border-blue-500 rounded-full text-blue-700" : cell ? "hover:bg-blue-100 hover:rounded-full" : ""
+                                    }`}
+                                    onClick={() => {
+                                      if (cell) {
+                                        onDateSelect(cell.dateStr);
+                                        onClose();
+                                      }
+                                    }}
+                                  >
+                                    {cell?.day || ""}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
     </motion.div>
   );
