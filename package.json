@@ -1,14 +1,15 @@
 {
   "name": "react-typescript",
+  "homepage": "https://github.com/Fulino24k/Shuffle/",
   "version": "1.0.0",
   "type": "module",
   "description": "React TypeScript using Vite bundler",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "cross-env GIT_EXEC_PATH=\"C:\\Program Files\\Git\\cmd\\git.exe\" gh-pages -d dist"
+    "deploy": "gh-pages -d dist"
   },
   "keywords": [],
   "author": "",
