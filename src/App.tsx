@@ -907,7 +907,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
         exit={{ scale: 0.95, opacity: 0 }}
         style={{ 
           width: "800px", 
-          height: viewMode === "year" ? "1000px" : "600px", // Taller height for year view
+          height: viewMode === "year" ? "1100px" : "600px", // Taller height for year view
           maxHeight: "90vh", // Ensure it doesn't exceed 90% of viewport height
           marginTop: viewMode === "year" ? "0px" : "0" // Move yearly view up by 100px
         }}
